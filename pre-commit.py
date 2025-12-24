@@ -3,7 +3,7 @@
 import ast
 import sys
 
-_src = '/Users/davidrosario/python/nautobot/jobs/prefix_loader/main.py'
+_src = 'nautobot/jobs/command_runner.py'
 
 def validate_job_file(src):
 	with open(src, "r") as f:
@@ -18,9 +18,12 @@ def validate_job_file(src):
 	# Iterate through every top-level item in the file
 	for node in tree.body:
 		if group_name is None and isinstance(node, ast.Assign):
-			group_name = node.value.value
-			if not group_name.startswith("lavacro-"):
-				print("Group name validation failed")
+			for target in node.targets:
+				if isinstance(target, ast.Name) and target.id == "name":
+					group_name = node.value.value
+
+					if not group_name.startswith("lavacro-"):
+						print("Group name validation failed")
 				#sys.exit(1)
 			continue
 
@@ -41,8 +44,8 @@ def process_job(node, src):
 	print(f"Checking Job Class: {class_name} in {src}")
 
 	# Rule A: Class Name Convention
-	if not class_name.endswith("Job"):
-		print(f"  [ERROR] Class '{class_name}' must end with 'Job'")
+	if not class_name.endswith("-job"):
+		print(f"  [ERROR] Class '{class_name}' must end with '-job'")
 
 	# Rule B: Inspect internal attributes (metadata)
 	# We look inside the class body for assignments like name = "..."
